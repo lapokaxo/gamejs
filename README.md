@@ -1,2 +1,0 @@
-# gamejs
-Created with CodeSandbox

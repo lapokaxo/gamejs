@@ -1,9 +1,12 @@
 import Phaser from "phaser";
+import Beam from "./beam";
 //taki boost co jak sie w niego wejdzie to wtedy dodaje ci jednego dush`a jak nacisniesz space to teleportujesz sie o iles tam pokseli
 //boost --- samonamierzająca amunicaja
 export default class Scene extends Phaser.Scene {
   constructor() {
     super("bootGame");
+    this.sceneWidth = 256;
+    this.sceneHeight = 272;
   }
 
   preload() {
@@ -32,10 +35,11 @@ export default class Scene extends Phaser.Scene {
   }
 
   create() {
+    this.score = 0;
     this.lives = 3;
     this.background = this.add.image(256 / 2, 272 / 2, "bg");
-    this.gamename = this.add.text(50, 5, "latajace samoloty");
-    this.scoreText = this.add.text(100, 20, "lives: " + this.lives);
+    this.gamename = this.add.text(50, 5, "");
+    this.scoreText = this.add.text(5, 5, "lives: " + this.lives);
     this.ship = this.physics.add.sprite(256 / 2, 272 / 2, "ship");
     this.eship1 = this.physics.add.image(190 / 2, 100 / 2, "eship1");
     this.eship1.flipY = true;
@@ -43,12 +47,14 @@ export default class Scene extends Phaser.Scene {
     this.eship2.flipY = true;
     this.eship3 = this.physics.add.image(120 / 2, 100 / 2, "eship3");
     this.eship3.flipY = true;
-    this.eship4 = this.physics.add.image(400 / 2, 100 / 2, "eship4");
-    this.eship4.flipY = true;
+    //this.eship4 = this.physics.add.image(400 / 2, 100 / 2, "eship4");
+    // this.eship4.flipY = true;
     this.KDown = 1;
     this.KDownA = 1;
     this.KDownB = 1;
     this.KDownC = 1;
+
+    this.ScoreText = this.add.text(155, 5, "Score: " + this.score);
 
     this.anims.create({
       key: "shot_anim",
@@ -70,29 +76,34 @@ export default class Scene extends Phaser.Scene {
       repeat: 0
     });
 
+    this.enemyShips = this.physics.add.group();
+    this.enemyShips.add(this.eship1);
+    this.enemyShips.add(this.eship2);
+    this.enemyShips.add(this.eship3);
+    // this.enemyShips.add(this.eship4);
+
     this.ship.play("ship_anim");
     this.keys = this.input.keyboard.createCursorKeys();
     this.rKeys = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
-    this.physics.add.overlap(this.ship, this.eship1, this.endgame, null, this);
-    this.physics.add.overlap(this.ship, this.eship2, this.endgame, null, this);
-    this.physics.add.overlap(this.ship, this.eship3, this.endgame, null, this);
-    this.physics.add.overlap(this.ship, this.eship4, this.endgame, null, this);
-    this.createPowerUps();
+    this.physics.add.overlap(
+      this.ship,
+      this.enemyShips,
+      this.endgame,
+      null,
+      this
+    );
 
     this.spacebar = this.input.keyboard.addKey(
       Phaser.Input.Keyboard.KeyCodes.SPACE
     );
+    this.createPowerUps();
+    this.createBullets();
   }
 
-  hitEnemy(bullet, enemyShip) {
-    bullet.destroy();
-    enemyShip.destroy();
-  }
-
-  createBullers() {
+  createBullets() {
     this.bullets = this.add.group();
 
-    this.anim.creat({
+    this.anims.create({
       key: "beam_anim",
       frames: this.anims.generateFrameNumbers("beam"),
       frameRate: 20,
@@ -101,7 +112,7 @@ export default class Scene extends Phaser.Scene {
     this.physics.add.overlap(
       this.bullets,
       this.enemyShips,
-      this.hitEFnemy,
+      this.hitEnemy,
       null,
       this
     );
@@ -119,7 +130,7 @@ export default class Scene extends Phaser.Scene {
 
     this.physics.add.overlap(
       this.powerUp1,
-      this.ship1,
+      this.ship,
       this.onPowerUpPickup,
       null,
       this
@@ -171,11 +182,44 @@ export default class Scene extends Phaser.Scene {
 
     this.KDownB = this.MoveShip(this.KDownB, this.eship3, 3.5);
 
-    this.KDownC = this.MoveShip(this.KDownC, this.eship4, 3);
+    // this.KDownC = this.MoveShip(this.KDownC, this.eship4, 3);
+
+    if (Phaser.Input.Keyboard.JustDown(this.spacebar)) {
+      this.shootBeam();
+    }
+    for (var i = 0; i < this.bullets.getChildren().length; i++) {
+      var beam = this.bullets.getChildren()[i];
+      beam.update();
+    }
 
     if (this.lives === 0) {
       this.wybuch = this.physics.add.sprite(this.ship.x, this.ship.y, "wybuch");
     }
+    if (this.eship1.y > this.sceneHeight) {
+      this.resetShipPosition(this.eship1);
+    }
+    if (this.eship2.y > this.sceneHeight) {
+      this.resetShipPosition(this.eship2);
+    }
+
+    if (this.eship3.y > this.sceneHeight) {
+      this.resetShipPosition(this.eship3);
+    }
+
+    //    if (this.eship4.y > this.sceneHeight) {
+    //     this.resetShipPosition(this.eship4);
+    //   }
+  }
+
+  resetShipPosition(ship) {
+    ship.y = 0;
+    ship.x = Math.random() * this.sceneWidth;
+  }
+
+  hitEnemy(bullet, enemyShip) {
+    bullet.destroy();
+    this.resetShipPosition(enemyShip);
+    this.updateScore();
   }
 
   updateLives() {
@@ -195,24 +239,33 @@ export default class Scene extends Phaser.Scene {
     this.lives = this.lives - 1;
   }
 
+  shootBeam() {
+    new Beam(this);
+  }
+
   MoveShip(KDown, eship, speed) {
     if (KDown === 1) {
       eship.y = eship.y + speed;
-      if (eship.y > 275) {
-        KDown = 0;
-        eship.flipY = false;
-      }
+      //  if (eship.y > 275) {
+      //   KDown = 0;
+      // eship.flipY = false;
+      //  }
     } else {
       eship.y = eship.y - speed;
-      if (eship.y < -10) {
-        KDown = 1;
-        eship.flipY = true;
-        eship.x = Math.random() * 256;
-      }
+      // if (eship.y < -10) {
+      //  KDown = 1;
+      //  eship.flipY = true;
+      //   eship.x = Math.random() * 256;
+      //  }
     }
 
     return KDown;
   }
+  updateScore() {
+    this.score += 1;
+    this.ScoreText.setText("score: " + this.score);
+  }
+
   endgame() {
     this.scene.start("end");
   }

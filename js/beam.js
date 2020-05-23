@@ -8,13 +8,13 @@ export default class Beam extends Phaser.GameObjects.Sprite {
     super(scene, x, y, "beam");
     scene.add.existing(this);
     this.play("beam_anim");
-    scene.physic.world.enableBody(this);
+    scene.physics.world.enableBody(this);
     this.body.velocity.y = -250;
-    scene.bulets.add(this);
+    scene.bullets.add(this);
   }
   update() {
     if (this.y < 32) {
-      this.detroy();
+      this.destroy();
     }
   }
 }

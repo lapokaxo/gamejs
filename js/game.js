@@ -7,7 +7,7 @@ let config = {
   width: 256,
   height: 272,
   backgroundColor: 0x000000,
-  scene: [Scene, EndGameScene, StartScene],
+  scene: [StartScene, Scene, EndGameScene],
   pixelArt: true,
   physics: {
     default: "arcade",

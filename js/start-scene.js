@@ -15,6 +15,7 @@ export default class StartScene extends Phaser.Scene {
     this.background = this.add.image(256 / 2, 272 / 2, "play");
     this.rKeys = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
     this.ship = this.physics.add.sprite(256 / 2, 272 / 2, "ship");
+    this.name = this.add.text(30, 10, 'SZCZELAJACE SAMOLOTY' );
   }
   update() {
     if (this.rKeys.isDown) {
